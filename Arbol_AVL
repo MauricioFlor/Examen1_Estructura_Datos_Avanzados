@@ -1,0 +1,208 @@
+#include <iostream>
+#include <algorithm>
+
+// Estructura para un nodo del árbol AVL
+struct NodoAVL {
+    int valor;
+    int altura;
+    NodoAVL* izquierda;
+    NodoAVL* derecha;
+
+    // Constructor
+    NodoAVL(int val) : valor(val), altura(1), izquierda(nullptr), derecha(nullptr) {}
+};
+
+// Función para obtener la altura de un nodo
+int altura(NodoAVL* nodo) {
+    if (nodo == nullptr)
+        return 0;
+    return nodo->altura;
+}
+
+// Función para obtener el balance de un nodo (diferencia de alturas entre sus hijos izquierdo y derecho)
+int balance(NodoAVL* nodo) {
+    if (nodo == nullptr)
+        return 0;
+    return altura(nodo->izquierda) - altura(nodo->derecha);
+}
+
+// Función para rotar a la derecha un subárbol en torno al nodo "x"
+NodoAVL* rotacion_derecha(NodoAVL* x) {
+    NodoAVL* y = x->izquierda;
+    NodoAVL* T2 = y->derecha;
+
+    // Realizar la rotación
+    y->derecha = x;
+    x->izquierda = T2;
+
+    // Actualizar alturas
+    x->altura = std::max(altura(x->izquierda), altura(x->derecha)) + 1;
+    y->altura = std::max(altura(y->izquierda), altura(y->derecha)) + 1;
+
+    return y;
+}
+
+// Función para rotar a la izquierda un subárbol en torno al nodo "y"
+NodoAVL* rotacion_izquierda(NodoAVL* y) {
+    NodoAVL* x = y->derecha;
+    NodoAVL* T2 = x->izquierda;
+
+    // Realizar la rotación
+    x->izquierda = y;
+    y->derecha = T2;
+
+    // Actualizar alturas
+    y->altura = std::max(altura(y->izquierda), altura(y->derecha)) + 1;
+    x->altura = std::max(altura(x->izquierda), altura(x->derecha)) + 1;
+
+    return x;
+}
+
+// Función para insertar un nuevo valor en el árbol AVL
+NodoAVL* insertar(NodoAVL* nodo, int valor) {
+    // Paso 1: Realizar la inserción normal de un BST
+    if (nodo == nullptr)
+        return new NodoAVL(valor);
+
+    if (valor < nodo->valor)
+        nodo->izquierda = insertar(nodo->izquierda, valor);
+    else if (valor > nodo->valor)
+        nodo->derecha = insertar(nodo->derecha, valor);
+    else // Duplicados no están permitidos
+        return nodo;
+
+    // Paso 2: Actualizar la altura de este nodo ancestro
+    nodo->altura = 1 + std::max(altura(nodo->izquierda), altura(nodo->derecha));
+
+    // Paso 3: Obtener el balance de este nodo para verificar si se ha desbalanceado
+    int balance_nodo = balance(nodo);
+
+    // Si el nodo se ha desbalanceado, hay cuatro casos a considerar
+
+    // Caso izquierda-izquierda
+    if (balance_nodo > 1 && valor < nodo->izquierda->valor)
+        return rotacion_derecha(nodo);
+
+    // Caso derecha-derecha
+    if (balance_nodo < -1 && valor > nodo->derecha->valor)
+        return rotacion_izquierda(nodo);
+
+    // Caso izquierda-derecha
+    if (balance_nodo > 1 && valor > nodo->izquierda->valor) {
+        nodo->izquierda = rotacion_izquierda(nodo->izquierda);
+        return rotacion_derecha(nodo);
+    }
+
+    // Caso derecha-izquierda
+    if (balance_nodo < -1 && valor < nodo->derecha->valor) {
+        nodo->derecha = rotacion_derecha(nodo->derecha);
+        return rotacion_izquierda(nodo);
+    }
+
+    // Devolver el nodo sin cambios si no se ha desbalanceado
+    return nodo;
+}
+
+// Función para encontrar el nodo con el valor mínimo en un árbol dado
+NodoAVL* encontrar_minimo(NodoAVL* nodo) {
+    NodoAVL* actual = nodo;
+    while (actual->izquierda != nullptr)
+        actual = actual->izquierda;
+    return actual;
+}
+
+// Función para eliminar un valor del árbol AVL
+NodoAVL* eliminar(NodoAVL* nodo, int valor) {
+    // Paso 1: Realizar la eliminación normal de un BST
+    if (nodo == nullptr)
+        return nodo;
+
+    if (valor < nodo->valor)
+        nodo->izquierda = eliminar(nodo->izquierda, valor);
+    else if (valor > nodo->valor)
+        nodo->derecha = eliminar(nodo->derecha, valor);
+    else {
+        if (nodo->izquierda == nullptr || nodo->derecha == nullptr) {
+            NodoAVL* temp = (nodo->izquierda != nullptr) ? nodo->izquierda : nodo->derecha;
+
+            if (temp == nullptr) {
+                temp = nodo;
+                nodo = nullptr;
+            } else
+                *nodo = *temp;
+            delete temp;
+        } else {
+            NodoAVL* temp = encontrar_minimo(nodo->derecha);
+            nodo->valor = temp->valor;
+            nodo->derecha = eliminar(nodo->derecha, temp->valor);
+        }
+    }
+
+    if (nodo == nullptr)
+        return nodo;
+
+    // Paso 2: Actualizar la altura de este nodo ancestro
+    nodo->altura = 1 + std::max(altura(nodo->izquierda), altura(nodo->derecha));
+
+    // Paso 3: Obtener el balance de este nodo para verificar si se ha desbalanceado
+    int balance_nodo = balance(nodo);
+
+    // Si el nodo se ha desbalanceado, hay cuatro casos a considerar
+
+    // Caso izquierda-izquierda
+    if (balance_nodo > 1 && balance(nodo->izquierda) >= 0)
+        return rotacion_derecha(nodo);
+
+    // Caso derecha-derecha
+    if (balance_nodo < -1 && balance(nodo->derecha) <= 0)
+        return rotacion_izquierda(nodo);
+
+    // Caso izquierda-derecha
+    if (balance_nodo > 1 && balance(nodo->izquierda) < 0) {
+        nodo->izquierda = rotacion_izquierda(nodo->izquierda);
+        return rotacion_derecha(nodo);
+    }
+
+    // Caso derecha-izquierda
+    if (balance_nodo < -1 && balance(nodo->derecha) > 0) {
+        nodo->derecha = rotacion_derecha(nodo->derecha);
+        return rotacion_izquierda(nodo);
+    }
+
+    return nodo;
+}
+
+// Función para imprimir el árbol AVL en orden ascendente
+void imprimir_arbol(NodoAVL* nodo) {
+    if (nodo == nullptr)
+        return;
+
+    imprimir_arbol(nodo->izquierda);
+    std::cout << nodo->valor << " ";
+    imprimir_arbol(nodo->derecha);
+}
+
+int main() {
+    NodoAVL* raiz = nullptr;
+
+    // Insertar valores en el árbol AVL
+    raiz = insertar(raiz, 10);
+    raiz = insertar(raiz, 20);
+    raiz = insertar(raiz, 30);
+    raiz = insertar(raiz, 40);
+    raiz = insertar(raiz, 50);
+    raiz = insertar(raiz, 25);
+
+    std::cout << "Árbol AVL después de la inserción: ";
+    imprimir_arbol(raiz);
+    std::cout << std::endl;
+
+    // Eliminar un valor del árbol AVL
+    raiz = eliminar(raiz, 30);
+
+    std::cout << "Árbol AVL después de la eliminación: ";
+    imprimir_arbol(raiz);
+    std::cout << std::endl;
+
+    return 0;
+}
