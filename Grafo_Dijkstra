@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+
+struct nodo;
+struct arista;
+
+// Estructura para representar una arista
+struct arista {
+    nodo* destino;
+    int peso;
+};
+
+// Estructura para representar un nodo
+struct nodo {
+    char nombre;
+    std::vector<arista> adyacentes;
+    int distancia; // Distancia mínima conocida desde el nodo de origen
+};
+
+// Función para inicializar el grafo con nodos
+void inicializar_grafo(std::vector<nodo>& nodos) {
+    nodos = std::vector<nodo>{
+        {'A', {}, std::numeric_limits<int>::max()},
+        {'B', {}, std::numeric_limits<int>::max()},
+        {'C', {}, std::numeric_limits<int>::max()},
+        {'D', {}, std::numeric_limits<int>::max()},
+        {'E', {}, std::numeric_limits<int>::max()}
+    };
+}
+
+// Función para agregar una arista entre dos nodos con un peso dado
+void agregar_arista(nodo& origen, nodo& destino, int peso) {
+    origen.adyacentes.push_back({&destino, peso});
+}
+
+// Implementación del algoritmo de Dijkstra
+void dijkstra(std::vector<nodo>& nodos, char origen) {
+    // Encontrar el nodo de origen en el vector de nodos
+    nodo* nodo_origen = nullptr;
+    for (auto& n : nodos) {
+        if (n.nombre == origen) {
+            nodo_origen = &n;
+            break;
+        }
+    }
+
+    if (!nodo_origen) {
+        std::cout << "Nodo de origen no encontrado." << std::endl;
+        return;
+    }
+
+    // Inicializar la distancia del nodo de origen como 0
+    nodo_origen->distancia = 0;
+
+    // Crear una cola de prioridad para los nodos no visitados
+    std::priority_queue<std::pair<int, nodo*>, std::vector<std::pair<int, nodo*>>, std::greater<std::pair<int, nodo*>>> cola_prioridad;
+    cola_prioridad.push({0, nodo_origen});
+
+    // Procesar nodos hasta que la cola esté vacía
+    while (!cola_prioridad.empty()) {
+        nodo* actual = cola_prioridad.top().second;
+        int distancia_actual = cola_prioridad.top().first;
+        cola_prioridad.pop();
+
+        // Actualizar las distancias mínimas para los nodos adyacentes
+        for (auto& arista : actual->adyacentes) {
+            int distancia_nueva = distancia_actual + arista.peso;
+            if (distancia_nueva < arista.destino->distancia) {
+                arista.destino->distancia = distancia_nueva;
+                cola_prioridad.push({distancia_nueva, arista.destino});
+            }
+        }
+    }
+}
+
+int main() {
+    std::vector<nodo> nodos;
+
+    // Inicializar el grafo con nodos y aristas
+    inicializar_grafo(nodos);
+    agregar_arista(nodos[0], nodos[1], 2); // A -> B (2)
+    agregar_arista(nodos[0], nodos[3], 1); // A -> D (1)
+    agregar_arista(nodos[1], nodos[2], 3); // B -> C (3)
+    agregar_arista(nodos[1], nodos[3], 2); // B -> D (2)
+    agregar_arista(nodos[3], nodos[4], 4); // D -> E (4)
+
+    // Ejecutar el algoritmo de Dijkstra desde el nodo A
+    dijkstra(nodos, 'A');
+
+    // Imprimir las distancias mínimas desde el nodo de origen
+    std::cout << "Distancias mínimas desde el nodo A:" << std::endl;
+    for (auto& n : nodos) {
+        std::cout << "Nodo " << n.nombre << ": " << n.distancia << std::endl;
+    }
+
+    return 0;
+}
