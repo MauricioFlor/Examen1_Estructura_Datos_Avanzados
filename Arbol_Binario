@@ -1,0 +1,205 @@
+#include <iostream>
+
+class Nodo {
+public:
+    int valor;
+    Nodo* izquierda;
+    Nodo* derecha;
+    Nodo(int val) {
+        valor = val;
+        izquierda = nullptr;
+        derecha = nullptr;
+    }
+};
+
+class ArbolBinario {
+public:
+    Nodo* raiz;
+
+    ArbolBinario() {
+        raiz = nullptr;
+    }
+
+    void menu() {
+        std::cout << "\n\tTRABAJANDO CON ARBOLES:\n\n";
+        std::cout << "1.- Crear e insertar valores en arbol binario" << std::endl;
+        std::cout << "2.- Recorrido en preorden" << std::endl;
+        std::cout << "3.- Recorrido en inorden" << std::endl;
+        std::cout << "4.- Recorrido en postorden" << std::endl;
+        std::cout << "5.- Eliminar nodo" << std::endl;
+        std::cout<<"6.- Mostrar arbol actual"<<std::endl;
+        std::cout << "0.- Salir" << std::endl;
+        std::cout << "\nINGRESE OPCION: ";
+    }
+
+    void insertar(int val) {
+        raiz = insertarRecursivo(raiz, val);
+    }
+
+    Nodo* insertarRecursivo(Nodo* nodoActual, int val) {
+        if (nodoActual == nullptr) {
+            return new Nodo(val);
+        }
+
+        if (val < nodoActual->valor) {
+            nodoActual->izquierda = insertarRecursivo(nodoActual->izquierda, val);
+        } else if (val > nodoActual->valor) {
+            nodoActual->derecha = insertarRecursivo(nodoActual->derecha, val);
+        }
+
+        return nodoActual;
+    }
+
+    void imprimirInOrden(Nodo* nodoActual) {
+        if (nodoActual != nullptr) {
+            imprimirInOrden(nodoActual->izquierda);
+            std::cout << nodoActual->valor << " ";
+            imprimirInOrden(nodoActual->derecha);
+        }
+    }
+
+    void imprimirPreOrden(Nodo* nodoActual) {
+        if (nodoActual != nullptr) {
+            std::cout << nodoActual->valor << " ";
+            imprimirPreOrden(nodoActual->izquierda);
+            imprimirPreOrden(nodoActual->derecha);
+        }
+    }
+
+    void imprimirPostOrden(Nodo* nodoActual) {
+        if (nodoActual != nullptr) {
+            imprimirPostOrden(nodoActual->izquierda);
+            imprimirPostOrden(nodoActual->derecha);
+            std::cout << nodoActual->valor << " ";
+        }
+    }
+
+    Nodo* buscarNodo(Nodo* nodoActual, int val) {
+        if (nodoActual == nullptr || nodoActual->valor == val) {
+            return nodoActual;
+        }
+
+        if (val < nodoActual->valor) {
+            return buscarNodo(nodoActual->izquierda, val);
+        } else {
+            return buscarNodo(nodoActual->derecha, val);
+        }
+    }
+
+    Nodo* eliminar(Nodo* nodoActual, int val) {
+        if (nodoActual == nullptr) {
+            return nodoActual;
+        }
+
+        if (val < nodoActual->valor) {
+            nodoActual->izquierda = eliminar(nodoActual->izquierda, val);
+        } else if (val > nodoActual->valor) {
+            nodoActual->derecha = eliminar(nodoActual->derecha, val);
+        } else {
+            if (nodoActual->izquierda == nullptr) {
+                Nodo* temp = nodoActual->derecha;
+                delete nodoActual;
+                return temp;
+            } else if (nodoActual->derecha == nullptr) {
+                Nodo* temp = nodoActual->izquierda;
+                delete nodoActual;
+                return temp;
+            }
+
+            nodoActual->valor = minValue(nodoActual->derecha);
+
+            nodoActual->derecha = eliminar(nodoActual->derecha, nodoActual->valor);
+        }
+
+        return nodoActual;
+    }
+    void imprimirArbol(Nodo* nodoActual, int nivel) {
+        if (nodoActual != nullptr) {
+            imprimirArbol(nodoActual->derecha, nivel + 1);
+            for (int i = 0; i < nivel; i++) {
+                std::cout << "   ";
+            }
+            std::cout << nodoActual->valor << std::endl;
+            imprimirArbol(nodoActual->izquierda, nivel + 1);
+        }
+    }
+
+
+    int minValue(Nodo* nodo) {
+        int minValue = nodo->valor;
+
+        while (nodo->izquierda != nullptr) {
+            minValue = nodo->izquierda->valor;
+            nodo = nodo->izquierda;
+        }
+
+        return minValue;
+    }
+};
+
+int main() {
+    ArbolBinario arbolBinario;
+    char op;
+
+    do {
+        arbolBinario.menu();
+        std::cin >> op;
+
+        switch (op) {
+            case '1':
+                int numElementos;
+                std::cout << "Ingrese el numero de elementos a insertar en el arbol: ";
+                std::cin >> numElementos;
+
+                for (int i = 0; i < numElementos; i++) {
+                    int elemento;
+                    std::cout << "Ingrese el elemento " << i + 1 << ": ";
+                    std::cin >> elemento;
+                    arbolBinario.insertar(elemento);
+                }
+                break;
+            case '2':
+                std::cout << "Recorrido en preorden del arbol binario: ";
+                arbolBinario.imprimirPreOrden(arbolBinario.raiz);
+                std::cout << std::endl;
+                break;
+            case '3':
+                std::cout << "Recorrido en inorden del arbol binario: ";
+                arbolBinario.imprimirInOrden(arbolBinario.raiz);
+                std::cout << std::endl;
+                break;
+            case '4':
+                std::cout << "Recorrido en postorden del arbol binario: ";
+                arbolBinario.imprimirPostOrden(arbolBinario.raiz);
+                std::cout << std::endl;
+                break;
+            case '5': {
+                int valor;
+                std::cout << "Ingrese el valor del nodo a eliminar: ";
+                std::cin >> valor;
+
+                Nodo* nodoEncontrado = arbolBinario.buscarNodo(arbolBinario.raiz, valor);
+                if (nodoEncontrado != nullptr) {
+                    arbolBinario.raiz = arbolBinario.eliminar(arbolBinario.raiz, valor);
+                    std::cout << "Nodo eliminado exitosamente." << std::endl;
+                } else {
+                    std::cout << "No se encontró el nodo con el valor especificado." << std::endl;
+                }
+            }
+            case '6':{
+                std::cout << "Árbol binario actual:" << std::endl;
+                arbolBinario.imprimirArbol(arbolBinario.raiz, 0);
+                break;
+                }
+                break;
+            case '0':
+                std::cout << "Saliendo del programa..." << std::endl;
+                break;
+            default:
+                std::cout << "Opción inválida. Inténtelo de nuevo." << std::endl;
+        }
+
+    } while (op != '0');
+
+    return 0;
+}
