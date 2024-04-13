@@ -1,0 +1,373 @@
+#include <iostream>
+#include <queue> // Para BFS
+#include <stack> // Para DFS
+struct arista; // Declaración anticipada de la estructura arista
+
+struct nodo {
+    char nombre;
+    bool visitado;
+    nodo* sgte;
+    arista* ady; // Ahora el compilador sabe que arista es un tipo válido
+};
+
+struct arista {
+    nodo* destino;
+    arista* sgte;
+};
+
+typedef nodo* Tnodo;
+typedef arista* Tarista;
+
+Tnodo p;
+
+void menu();
+void insertar_nodo();
+void agrega_arista(Tnodo&, Tnodo&, Tarista&);
+void insertar_arista();
+void vaciar_aristas(Tnodo&);
+void eliminar_nodo();
+void eliminar_arista();
+void mostrar_grafo();
+void mostrar_aristas();
+void recorrer_grafo_en_amplitud();
+void recorrer_grafo_en_profundidad();
+void algoritmo_dikstra();
+int main() {
+    p = NULL;
+    int op;
+
+    do {
+        menu();
+        std::cin >> op;
+
+        switch (op) {
+            case 1:
+                insertar_nodo();
+                break;
+            case 2:
+                insertar_arista();
+                break;
+            case 3:
+                eliminar_nodo();
+                break;
+            case 4:
+                eliminar_arista();
+                break;
+            case 5:
+                mostrar_grafo();
+                break;
+            case 6:
+                mostrar_aristas();
+                break;
+            case 7:
+                recorrer_grafo_en_amplitud();
+                break;
+            case 8:
+                recorrer_grafo_en_profundidad();
+            case 9:
+                algoritmo_dikstra();
+            case 0:
+                std::cout<<"Saliendo del programa"<<std::endl;
+            default:
+                std::cout << "OPCION NO VALIDA...!!!";
+                break;
+        }
+
+        std::cout << std::endl << std::endl;
+        system("pause"); system("cls");
+    } while (op != 0);
+
+    return 0;
+}
+void reiniciar_visitados() {
+    Tnodo aux = p;
+    while (aux != NULL) {
+        aux->visitado = false;
+        aux = aux->sgte;
+    }
+}
+void recorrer_grafo_en_amplitud() {
+    if (p == NULL) {
+        std::cout << "El grafo está vacío." << std::endl;
+        return;
+    }
+
+    std::queue<Tnodo> cola;
+    Tnodo aux = p;
+    std::cout << "Recorrido en amplitud (BFS): ";
+    std::cout << aux->nombre << " ";
+    aux->visitado = true;
+    cola.push(aux);
+
+    while (!cola.empty()) {
+        aux = cola.front();
+        cola.pop();
+        Tarista ar = aux->ady;
+        while (ar != NULL) {
+            if (ar->destino->visitado == false) {
+                std::cout << ar->destino->nombre << " ";
+                ar->destino->visitado = true;
+                cola.push(ar->destino);
+            }
+            ar = ar->sgte;
+        }
+    }
+    std::cout << std::endl;
+    reiniciar_visitados();
+}
+
+void recorrer_grafo_en_profundidad(Tnodo nodo_actual) {
+    if (nodo_actual == NULL) {
+        return;
+    }
+
+    std::stack<Tnodo> pila;
+    pila.push(nodo_actual);
+    std::cout << "Recorrido en profundidad (DFS): ";
+
+    while (!pila.empty()) {
+        Tnodo nodo = pila.top();
+        pila.pop();
+        if (!nodo->visitado) {
+            std::cout << nodo->nombre << " ";
+            nodo->visitado = true;
+        }
+
+        Tarista ar = nodo->ady;
+        while (ar != NULL) {
+            if (!ar->destino->visitado) {
+                pila.push(ar->destino);
+            }
+            ar = ar->sgte;
+        }
+    }
+
+    std::cout << std::endl;
+    reiniciar_visitados();
+}
+
+void recorrer_grafo_en_profundidad() {
+    if (p == NULL) {
+        std::cout << "El grafo está vacío." << std::endl;
+        return;
+    }
+
+    std::cout << "Recorrido en profundidad (DFS): ";
+    recorrer_grafo_en_profundidad(p);
+}
+
+void menu() {
+    std::cout << "\n\tREPRESENTACION DE GRAFOS DIRIGIDOS\n\n";
+    std::cout << " 1. INSERTAR UN NODO " << std::endl;
+    std::cout << " 2. INSERTAR UNA ARISTA " << std::endl;
+    std::cout << " 3. ELIMINAR UN NODO " << std::endl;
+    std::cout << " 4. ELIMINAR UNA ARISTA " << std::endl;
+    std::cout << " 5. MOSTRAR GRAFO " << std::endl;
+    std::cout << " 6. MOSTRAR ARISTAS DE UN NODO " << std::endl;
+    std::cout << " 7. RECORRER GRAFO EN AMPLITUD " << std::endl;
+    std::cout << " 8. RECORRER GRAFO EN PROFUNDIDAD " << std::endl;
+    std::cout << " 0. SALIR " << std::endl;
+    std::cout << "\n INGRESE OPCION: ";
+}
+
+void insertar_nodo() {
+    Tnodo t, nuevo = new nodo;
+    std::cout << "INGRESE VARIABLE:";
+    std::cin >> nuevo->nombre;
+    nuevo->sgte = NULL;
+    nuevo->ady = NULL;
+
+    if (p == NULL) {
+        p = nuevo;
+        std::cout << "PRIMER NODO...!!!";
+    } else {
+        t = p;
+        while (t->sgte != NULL) {
+            t = t->sgte;
+        }
+        t->sgte = nuevo;
+        std::cout << "NODO INGRESADO...!!!";
+    }
+}
+
+void agrega_arista(Tnodo& aux, Tnodo& aux2, Tarista& nuevo) {
+    Tarista q;
+    if (aux->ady == NULL) {
+        aux->ady = nuevo;
+        nuevo->destino = aux2;
+        nuevo->sgte = NULL;
+        std::cout << "PRIMERA ARISTA....!";
+    } else {
+        q = aux->ady;
+        while (q->sgte != NULL)
+            q = q->sgte;
+        nuevo->destino = aux2;
+        nuevo->sgte = NULL;
+        q->sgte = nuevo;
+        std::cout << "ARISTA AGREGADA...!!!!";
+    }
+}
+
+void insertar_arista() {
+    char ini, fin;
+    Tarista nuevo = new arista;
+    Tnodo aux, aux2;
+    if (p == NULL) {
+        std::cout << "GRAFO VACIO...!!!!";
+        return;
+    }
+    nuevo->sgte = NULL;
+    std::cout << "INGRESE NODO DE INICIO:";
+    std::cin >> ini;
+    std::cout << "INGRESE NODO FINAL:";
+    std::cin >> fin;
+    aux = p;
+    aux2 = p;
+    while (aux2 != NULL) {
+        if (aux2->nombre == fin) {
+            break;
+        }
+        aux2 = aux2->sgte;
+    }
+    while (aux != NULL) {
+        if (aux->nombre == ini) {
+            agrega_arista(aux, aux2, nuevo);
+            return;
+        }
+        aux = aux->sgte;
+    }
+}
+
+void vaciar_aristas(Tnodo& aux) {
+    Tarista q, r;
+    q = aux->ady;
+    while (q != NULL) {
+        r = q;
+        q = q->sgte;
+        delete(r);
+    }
+}
+
+void eliminar_nodo() {
+    char var;
+    Tnodo aux, ant;
+    aux = p;
+    ant = p;
+
+    std::cout << "ELIMINAR UN NODO\n";
+    if (p == NULL) {
+        std::cout << "GRAFO VACIO...!!!!";
+        return;
+    }
+    std::cout << "INGRESE NOMBRE DE VARIABLE:";
+    std::cin >> var;
+    while (aux != NULL) {
+        if (aux->nombre == var) {
+            if (aux->ady != NULL)
+                vaciar_aristas(aux);
+            if (aux == p) {
+                p = p->sgte;
+                delete(aux);
+                std::cout << "NODO ELIMINADO...!!!!";
+                return;
+            } else {
+                ant->sgte = aux->sgte;
+                delete(aux);
+                std::cout << "NODO ELIMINADO...!!!!";
+                return;
+            }
+        } else {
+            ant = aux;
+            aux = aux->sgte;
+        }
+    }
+}
+
+void eliminar_arista() {
+    char ini, fin;
+    Tnodo aux, aux2;
+    Tarista q, r;
+    std::cout << "\n ELIMINAR ARISTA\n";
+    std::cout << "INGRESE NODO DE INICIO:";
+    std::cin >> ini;
+    std::cout << "INGRESE NODO FINAL:";
+    std::cin >> fin;
+    aux = p;
+    aux2 = p;
+    while (aux2 != NULL) {
+        if (aux2->nombre == fin) {
+            break;
+        } else
+            aux2 = aux2->sgte;
+    }
+    while (aux != NULL) {
+        if (aux->nombre == ini) {
+            q = aux->ady;
+            r = q;
+            while (q != NULL) {
+                if (q->destino == aux2) {
+                    if (q == aux->ady)
+                        aux->ady = aux->ady->sgte;
+                    else
+                        r->sgte = q->sgte;
+                    delete(q);
+                    std::cout << "ARISTA " << aux->nombre << "----->" << aux2->nombre;
+                    std::cout << " ELIMINADA.....!!!!";
+                    return;
+                }
+                r = q;
+                q = q->sgte;
+            }
+        }
+        aux = aux->sgte;
+    }
+}
+
+void mostrar_grafo() {
+    Tnodo ptr;
+    Tarista ar;
+    ptr = p;
+    std::cout << "NODO|LISTA DE ADYACENCIA\n";
+    while (ptr != NULL) {
+        std::cout << " " << ptr->nombre << "|";
+        if (ptr->ady != NULL) {
+            ar = ptr->ady;
+            while (ar != NULL) {
+                std::cout << " " << ar->destino->nombre;
+                ar = ar->sgte;
+            }
+        }
+        ptr = ptr->sgte;
+        std::cout << std::endl;
+    }
+}
+
+
+void mostrar_aristas() {
+    Tnodo aux;
+    Tarista ar;
+    char var;
+    std::cout << "MOSTRAR ARISTAS DE NODO\n";
+    std::cout << "INGRESE NODO:";
+    std::cin >> var;
+    aux = p;
+    while (aux != NULL) {
+        if (aux->nombre == var) {
+            if (aux->ady == NULL) {
+                std::cout << "EL NODO NO TIENE ARISTAS...!!!!";
+                return;
+            } else {
+                std::cout << "NODO|LISTA DE ADYACENCIA\n";
+                std::cout << " " << aux->nombre << "|";
+                ar = aux->ady;
+                while (ar != NULL) {
+                    std::cout << ar->destino->nombre << " ";
+                    ar = ar->sgte;
+                }
+                std::cout << std::endl;
+                return;
+            }
+        } else
+            aux = aux->sgte;
+    }
+}
